@@ -1,6 +1,6 @@
 import scrapy
 import pandas as pd
-import scrapy
+from openpyxl import load_workbook
 import re
     
 class BatchSpider(scrapy.Spider):
@@ -10,7 +10,6 @@ class BatchSpider(scrapy.Spider):
   def start_requests(self):
     xl = pd.ExcelFile('test_1.xlsx')
     sheet_names = xl.sheet_names
-    print sheet_names
     df = xl.parse(sheet_names[0])
 
     name_list = df['OWNER_NAME_1'][0].split()
@@ -35,12 +34,26 @@ class BatchSpider(scrapy.Spider):
     #info = response.xpath('//div[@class="detailSection filingInformation"]').extract_first()
     #info = response.xpath('//*[@class="detailSection"]/span[text()[contains(.,"Authorized Person")]]').extract()
     #info = response.xpath('//*[@class="detailSection filingInformation"]/span[text()]').extract_first()
-    info = response.xpath('//div[@class="detailSection"]/text()').extract()
-    for i in info:
-        name = re.search(r'\S', i)
-        if name:
-            print i.lstrip().rstrip()
-            names.append(i.lstrip().rstrip())
-    
+    #info = response.xpath('//div[@class="detailSection"]/text()')
+
+    info = response.xpath('//div[@class="detailSection"]')
+    for x in info:
+        if 'Authorized' in x.extract():
+            address = x.xpath('//div/text()').extract()
+            for a in address:
+                names = re.search(r'\S', a)
+                if names:
+                    name = a.lstrip().rstrip()
+                    print name
+    '''
+            #names.append(i.lstrip().rstrip())
+            wb = load_workbook(filename = 'test_1.xlsx')
+            sheet_names = wb.get_sheet_names()
+            ws = wb[sheet_names[0]]
+            ws['F1']=name
+            wb.save('test_1.xlsx')
+            break
+    '''
+
     #print info
 
