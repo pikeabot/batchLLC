@@ -5,6 +5,7 @@ import datetime
 import pandas as pd
 from fuzzywuzzy import fuzz
 from openpyxl import load_workbook
+from openpyxl.styles import Alignment
 import re
 from bs4 import BeautifulSoup
 import threading
