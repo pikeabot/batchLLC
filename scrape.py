@@ -174,11 +174,17 @@ def get_llc_info(url, file_name, owner_name, i):
             ws = wb[sheet_names[0]]
             index = str(i+2)
             ws['F'+index] = ('\n').join(last_names)
+            ws['F'+index].alignment = Alignment(wrapText=True)
             ws['G'+index] = ('\n').join(first_names)
+            ws['G'+index].alignment = Alignment(wrapText=True)
             ws['R'+index] = ('\n').join(addresses)
+            ws['R'+index].alignment = Alignment(wrapText=True)
             ws['S'+index] = ('\n').join(cities)
+            ws['S'+index].alignment = Alignment(wrapText=True)
             ws['T'+index] = ('\n').join(states)
+            ws['T'+index].alignment = Alignment(wrapText=True)
             ws['U'+index] = ('\n').join(zip_codes)
+            ws['U'+index].alignment = Alignment(wrapText=True)
             wb.save(file_name)
           except Exception as e:
               logging.info('\n')
