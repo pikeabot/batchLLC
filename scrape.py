@@ -76,7 +76,7 @@ class Scraper:
       sys.exit(1)
 
     # Loop through the list of LLC business names
-    for i in range(0, self.num_owners):
+    for i in range(0, self.row_count):
       try: 
         owner_name = df['OWNER_NAME_1'][i]
         print 'Checking for {}'.format(owner_name)
@@ -152,6 +152,7 @@ class Scraper:
                   first_names.append(info[0].split(',')[1])
                 else:
                   last_names.append(info[0])
+                  first_names.append('\x20')
               except Exception as e: 
                 logging.info('\n')
                 logging.info(str(datetime.datetime.now()) +':   Error parsing first and last names for {0} [{1}]'.format(owner_name, str(i+1)))
@@ -167,7 +168,6 @@ class Scraper:
                 logging.info('\n')
                 logging.info(str(datetime.datetime.now()) +': Error parsing street address for {0} [{1}]'.format(owner_name, str(i+1)))
                 logging.exception(str(e))
-
               try: 
                 last_info_line = info[-1]
                 city_state = re.findall(r'\S+, \S+', last_info_line)[0].split(',')
@@ -177,13 +177,15 @@ class Scraper:
                 logging.info('\n')
                 logging.info(str(datetime.datetime.now()) +': Error parsing for city and state for {0} [{1}]'.format(owner_name, str(i+1)))
                 logging.exception(str(e))
+                cities.append(last_info_line)
+                states.append('\x20')
               try:
                 zip_codes.append(re.findall(r'\d+', last_info_line)[0])
               except Exception as e: 
                 logging.info('\n')
                 logging.info(str(datetime.datetime.now()) +': Error parsing for zip code for {0} [{1}]'.format(owner_name, str(i+1)))
                 logging.exception(str(e))
-
+                zip_codes.append('\x20')
             try:
               # Write info to excel file
               wb = load_workbook(filename = file_name)
@@ -216,8 +218,9 @@ class Scraper:
       # Write info to excel file
       wb = load_workbook(filename = self.filename)
       filename_updated = self.sheet0 + ' (updated)'
-      ws_pretty = wb.create_sheet(filename_updated, 1)
-      wb.save(self.filename)
+      if not filename_updated in wb.sheetnames:
+        ws_pretty = wb.create_sheet(filename_updated, 1)
+        wb.save(self.filename)
 
       #writer = pandas.ExcelWriter(self.filename, engine='openpyxl')
       #writer.book = wb
@@ -238,21 +241,28 @@ class Scraper:
           for i in range(0, len(row[1]['Owner_Last Name'].split('\n'))):
             df_temp = row[1]
             df_temp['Owner_Last Name'] = last_names[i]
-            df_temp['Owner_First Name'] = first_names[i] 
+            #print last_names
+            if not isinstance(row[1]['Owner_First Name'], float) or row[1]['Owner_First Name'] != '': 
+              df_temp['Owner_First Name'] = first_names[i] 
             df_temp['OWNER_ADDRESS'] = addresses[i]
             df_temp['OWNER_CITY'] = cities[i]
             df_temp['OWNER_STATE'] = states[i]
             df_temp['OWNER_ZIPCODE'] = zip_codes[i] 
             df_pretty = pd.concat([df_pretty, df_temp.to_frame().T]) 
-
+            
         else:
           df_pretty = pd.concat([df_pretty, row[1].to_frame().T])  
-      writer = pd.ExcelWriter(self.filename)
+
+      writer = pd.ExcelWriter(self.filename,  engine='openpyxl')
+      writer.book = wb
+      writer.sheets = dict((ws.title,ws) for ws in wb.worksheets)
       df_pretty.to_excel(writer, sheet_name=filename_updated)    
       writer.save()    
     except Exception as e:
         logging.info('\n')
         #logging.info(str(datetime.datetime.now()) +': Error writing data to excel file for {0} [{1}]'.format(owner_name, str(i+1)))
+        logging.info('error at {0}'.format(last_names[i]))
+        logging.info(row[1]['Owner_First Name'])
         logging.exception(str(e))  
 
 if __name__ == '__main__':
@@ -262,7 +272,6 @@ if __name__ == '__main__':
   args =  parser.parse_args()
 
   scraper=Scraper(args.file)
-  #scraper.start_logging()
   #scraper.start_requests()
   scraper.pretty()
   print 'Script is finished!'
