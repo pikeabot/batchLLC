@@ -214,6 +214,7 @@ class Scraper:
     return
 
   def pretty(self):
+    
     try:
       # Write info to excel file
       wb = load_workbook(filename = self.filename)
@@ -221,7 +222,7 @@ class Scraper:
       if not filename_updated in wb.sheetnames:
         ws_pretty = wb.create_sheet(filename_updated, 1)
         wb.save(self.filename)
-
+      '''
       #writer = pandas.ExcelWriter(self.filename, engine='openpyxl')
       #writer.book = wb
       #writer.sheets = dict((ws.title, ws) for ws in wb.worksheets)
@@ -256,13 +257,34 @@ class Scraper:
       writer = pd.ExcelWriter(self.filename,  engine='openpyxl')
       writer.book = wb
       writer.sheets = dict((ws.title,ws) for ws in wb.worksheets)
-      df_pretty.to_excel(writer, sheet_name=filename_updated)    
+      df_pretty.to_excel(writer, sheet_name=filename_updated, index=False)    
       writer.save()    
+      ''' 
     except Exception as e:
         logging.info('\n')
         #logging.info(str(datetime.datetime.now()) +': Error writing data to excel file for {0} [{1}]'.format(owner_name, str(i+1)))
         logging.info('error at {0}'.format(last_names[i]))
         logging.info(row[1]['Owner_First Name'])
+        logging.exception(str(e))  
+    # Format sheet -hide necessary columns and widen other columns
+    
+    try:
+      # Write info to excel file
+      wb = load_workbook(filename = self.filename)
+      ws = wb[filename_updated]
+      for col in ['A', 'B', 'C', 'D', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'x']:
+        ws.column_dimensions[col].hidden= True
+      for col in ['E', 'V']:
+        ws.column_dimensions[col].width = 43
+      for col in ['F', 'G', 'R', 'S', 'T', 'U', 'W']:
+        ws.column_dimensions[col].width = 13
+      print self.sheet0
+      wb.remove_sheet(wb[self.sheet0])
+      ws.title = self.sheet0
+      wb.save(self.filename)
+    except Exception as e:
+        logging.info('\n')
+        logging.info(str(datetime.datetime.now()) +': Error updating worksheet format')
         logging.exception(str(e))  
 
 if __name__ == '__main__':
